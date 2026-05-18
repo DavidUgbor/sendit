@@ -1,5 +1,7 @@
 # SendIT
 
+[![CI](https://github.com/DavidUgbor/sendit/actions/workflows/ci.yml/badge.svg)](https://github.com/DavidUgbor/sendit/actions/workflows/ci.yml)
+
 A courier service that helps users deliver parcels to different destinations. SendIT provides courier quotes based on weight categories.
 
 Andela Developer Challenge — "Build A Product: SendIT".
