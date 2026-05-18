@@ -15,17 +15,50 @@
         .btn:hover { background: #c0392b; }
         p { text-align: center; margin-top: 20px; color: #666; }
         a { color: #e74c3c; text-decoration: none; }
+        #msg { padding: 10px; border-radius: 5px; margin-bottom: 15px; display: none; font-size: 0.9em; }
+        #msg.error { background: #f8d7da; color: #721c24; display: block; }
+        #msg.success { background: #d4edda; color: #155724; display: block; }
     </style>
 </head>
 <body>
     <div class="card">
         <h2>SendIT Login</h2>
+        <div id="msg"></div>
         <label>Email</label>
-        <input type="email" placeholder="Enter your email" />
+        <input type="email" id="email" placeholder="Enter your email" />
         <label>Password</label>
-        <input type="password" placeholder="Enter your password" />
-        <button class="btn">Login</button>
+        <input type="password" id="password" placeholder="Enter your password" />
+        <button class="btn" onclick="login()">Login</button>
         <p>Don't have an account? <a href="signup.html">Sign Up</a></p>
     </div>
+    <script>
+        const API = 'http://localhost:3000';
+        function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            fetch(`${API}/api/v1/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.token) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    window.location.href = 'dashboard.html';
+                } else {
+                    showMsg(data.message || 'Login failed', 'error');
+                }
+            })
+            .catch(() => showMsg('Cannot reach server', 'error'));
+        }
+        function showMsg(text, type) {
+            const el = document.getElementById('msg');
+            el.textContent = text;
+            el.className = type;
+        }
+        document.addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+    </script>
 </body>
 </html>
