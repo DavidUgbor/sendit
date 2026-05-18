@@ -17,9 +17,11 @@
         input, select { width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 5px; font-size: 1em; }
         .btn { width: 100%; background: #e74c3c; color: white; padding: 12px; border: none; border-radius: 5px; font-size: 1em; cursor: pointer; }
         .btn:hover { background: #c0392b; }
+        .btn:disabled { background: #aaa; cursor: not-allowed; }
         .price-box { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; text-align: center; }
         .price-box h3 { color: #e74c3c; font-size: 1.5em; }
         .price-box p { color: #666; font-size: 0.9em; }
+        #msg { display: none; margin-bottom: 15px; padding: 10px; border-radius: 5px; background: #f0f0f0; text-align: center; }
     </style>
 </head>
 <body>
@@ -27,32 +29,82 @@
         <h1>SendIT</h1>
         <div>
             <a href="dashboard.html">Dashboard</a>
-            <a href="index.html">Logout</a>
+            <a href="#" id="logout">Logout</a>
         </div>
     </nav>
     <div class="container">
         <div class="card">
             <h2>Create Delivery Order</h2>
+            <div id="msg"></div>
             <label>Pickup Location</label>
-            <input type="text" placeholder="Enter pickup address" />
+            <input type="text" id="pickup" placeholder="Enter pickup address" />
             <label>Destination</label>
-            <input type="text" placeholder="Enter destination address" />
+            <input type="text" id="destination" placeholder="Enter destination address" />
             <label>Parcel Weight</label>
-            <select>
-                <option>Select weight category</option>
-                <option>Light (0 - 2kg) - ₦500</option>
-                <option>Medium (2 - 5kg) - ₦1000</option>
-                <option>Heavy (5 - 10kg) - ₦2000</option>
-                <option>Extra Heavy (10kg+) - ₦3500</option>
+            <select id="weight">
+                <option value="">Select weight category</option>
+                <option value="Light (0-2kg)">Light (0 - 2kg) - ₦500</option>
+                <option value="Medium (2-5kg)">Medium (2 - 5kg) - ₦1,000</option>
+                <option value="Heavy (5-10kg)">Heavy (5 - 10kg) - ₦2,000</option>
+                <option value="Extra Heavy (10kg+)">Extra Heavy (10kg+) - ₦3,500</option>
             </select>
             <label>Parcel Description</label>
-            <input type="text" placeholder="What are you sending?" />
+            <input type="text" id="description" placeholder="What are you sending?" />
             <div class="price-box">
                 <p>Estimated Price</p>
-                <h3>₦1,000</h3>
+                <h3 id="price">₦0</h3>
             </div>
-            <button class="btn">Place Order</button>
+            <button class="btn" id="btn">Place Order</button>
         </div>
     </div>
+    <script src="api.js"></script>
+    <script>
+        requireAuth();
+
+        document.getElementById('logout').addEventListener('click', (e) => {
+            e.preventDefault();
+            clearAuth();
+            window.location.href = 'login.html';
+        });
+
+        const prices = {
+            'Light (0-2kg)': '₦500',
+            'Medium (2-5kg)': '₦1,000',
+            'Heavy (5-10kg)': '₦2,000',
+            'Extra Heavy (10kg+)': '₦3,500'
+        };
+
+        document.getElementById('weight').addEventListener('change', function () {
+            document.getElementById('price').textContent = prices[this.value] || '₦0';
+        });
+
+        document.getElementById('btn').addEventListener('click', async () => {
+            const pickup = document.getElementById('pickup').value.trim();
+            const destination = document.getElementById('destination').value.trim();
+            const weight = document.getElementById('weight').value;
+            const description = document.getElementById('description').value.trim();
+            const btn = document.getElementById('btn');
+
+            if (!pickup || !destination || !weight) {
+                return showMsg('msg', 'Please fill in pickup, destination and weight.', true);
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Placing order...';
+
+            try {
+                await apiFetch('/api/v1/parcels', {
+                    method: 'POST',
+                    body: JSON.stringify({ pickup, destination, weight, description })
+                });
+                showMsg('msg', 'Order placed! Redirecting to dashboard...', false);
+                setTimeout(() => { window.location.href = 'dashboard.html'; }, 1500);
+            } catch (err) {
+                showMsg('msg', err.message, true);
+                btn.disabled = false;
+                btn.textContent = 'Place Order';
+            }
+        });
+    </script>
 </body>
 </html>
