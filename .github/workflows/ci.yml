@@ -10,6 +10,21 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: sendit_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
       - uses: actions/checkout@v4
 
@@ -22,6 +37,9 @@ jobs:
         working-directory: server
         run: npm install
 
+      - name: Set up database schema
+        run: psql postgresql://postgres:postgres@localhost:5432/sendit_test -f server/schema.sql
+
       - name: Lint
         working-directory: server
         run: npm run lint
@@ -30,5 +48,5 @@ jobs:
         working-directory: server
         run: npm test
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sendit_test
+          JWT_SECRET: ci_test_secret_key
